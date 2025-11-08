@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天吃什么？</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .result {
+            text-align: center;
+            margin: 30px 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-text {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .pick-button {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 30px;
+        }
+
+        .pick-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .pick-button:active {
+            transform: translateY(0);
+        }
+
+        .options-section {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .option-tag {
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            line-height: 1;
+        }
+
+        .add-section {
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .add-input:focus {
+            border-color: #667eea;
+        }
+
+        .add-button {
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .add-button:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍜 今天吃什么？</h1>
+
+        <div class="result" id="result">
+            <div class="result-text" id="resultText" style="display: none;"></div>
+        </div>
+
+        <button class="pick-button" onclick="pickLunch()">开始选择！</button>
+
+        <div class="options-section">
+            <div class="section-title">可选菜单</div>
+            <div class="options-list" id="optionsList"></div>
+
+            <div class="add-section">
+                <input
+                    type="text"
+                    class="add-input"
+                    id="newOption"
+                    placeholder="添加新的选项..."
+                    onkeypress="if(event.key==='Enter') addOption()"
+                >
+                <button class="add-button" onclick="addOption()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 默认午饭选项
+        let lunchOptions = [
+            // 麻辣烫系列
+            '土豆粉麻辣烫',
+            '宽粉麻辣烫',
+            '方便面麻辣烫',
+
+            // 中式快餐
+            '黄焖鸡米饭',
+            '沙县拌面',
+            '沙县炒面',
+            '兰州牛肉拉面',
+            '红烧牛肉面',
+            '重庆小面',
+            '酸辣粉',
+            '过桥米线',
+            '鸡汤米线',
+
+            // 盖浇饭系列
+            '番茄炒蛋盖浇饭',
+            '鱼香肉丝盖浇饭',
+            '宫保鸡丁盖浇饭',
+            '青椒肉丝盖浇饭',
+            '红烧茄子盖浇饭',
+            '酸辣土豆丝盖浇饭',
+            '回锅肉盖浇饭',
+            '糖醋里脊盖浇饭',
+
+            // 煲仔饭系列
+            '腊味煲仔饭',
+            '滑鸡煲仔饭',
+            '排骨煲仔饭',
+            '牛肉煲仔饭',
+
+            // 快餐连锁
+            '麦当劳巨无霸套餐',
+            '麦当劳麦辣鸡腿堡套餐',
+            '麦当劳板烧鸡腿堡套餐',
+            '肯德基香辣鸡腿堡套餐',
+            '肯德基奥尔良烤鸡腿堡套餐',
+            '肯德基吮指原味鸡套餐',
+            '汉堡王皇堡套餐',
+
+            // 饺子馄饨
+            '猪肉大葱饺子',
+            '三鲜水饺',
+            '鲜肉馄饨',
+
+            // 炸鸡披萨
+            '香辣炸鸡配薯条',
+            '培根披萨',
+            '夏威夷披萨',
+            '意大利香肠披萨',
+
+            // 日韩料理
+            '三文鱼寿司',
+            '鳗鱼寿司套餐',
+            '日式拉面',
+            '亲子丼',
+            '牛肉饭（吉野家）',
+            '韩式石锅拌饭',
+            '韩式泡菜炒饭',
+            '韩式部队火锅',
+
+            // 火锅烤肉
+            '麻辣牛肉火锅',
+            '番茄牛腩火锅',
+            '清汤羊肉火锅',
+            '韩式烤五花肉',
+            '日式烤肉套餐'
+        ];
+
+        // 从本地存储加载选项
+        function loadOptions() {
+            const saved = localStorage.getItem('lunchOptions');
+            if (saved) {
+                lunchOptions = JSON.parse(saved);
+            }
+            renderOptions();
+        }
+
+        // 保存选项到本地存储
+        function saveOptions() {
+            localStorage.setItem('lunchOptions', JSON.stringify(lunchOptions));
+        }
+
+        // 渲染选项列表
+        function renderOptions() {
+            const list = document.getElementById('optionsList');
+            list.innerHTML = '';
+            lunchOptions.forEach((option, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'option-tag';
+                tag.innerHTML = `
+                    ${option}
+                    <button class="remove-btn" onclick="removeOption(${index})">×</button>
+                `;
+                list.appendChild(tag);
+            });
+        }
+
+        // 随机选择午饭
+        function pickLunch() {
+            if (lunchOptions.length === 0) {
+                alert('请先添加一些午饭选项！');
+                return;
+            }
+
+            const resultText = document.getElementById('resultText');
+            const randomIndex = Math.floor(Math.random() * lunchOptions.length);
+            const chosen = lunchOptions[randomIndex];
+
+            resultText.textContent = chosen;
+            resultText.style.display = 'block';
+
+            // 重新触发动画
+            resultText.style.animation = 'none';
+            setTimeout(() => {
+                resultText.style.animation = 'fadeIn 0.5s ease-in';
+            }, 10);
+        }
+
+        // 添加新选项
+        function addOption() {
+            const input = document.getElementById('newOption');
+            const value = input.value.trim();
+
+            if (value === '') {
+                return;
+            }
+
+            if (lunchOptions.includes(value)) {
+                alert('这个选项已经存在了！');
+                return;
+            }
+
+            lunchOptions.push(value);
+            saveOptions();
+            renderOptions();
+            input.value = '';
+        }
+
+        // 删除选项
+        function removeOption(index) {
+            lunchOptions.splice(index, 1);
+            saveOptions();
+            renderOptions();
+        }
+
+        // 页面加载时初始化
+        loadOptions();
+    </script>
+</body>
+</html>
